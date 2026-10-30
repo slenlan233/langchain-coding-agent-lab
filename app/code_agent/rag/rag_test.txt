@@ -1,0 +1,32 @@
+# Terminal / PowerShell / Shell 终端工具使用规范
+
+关键词：
+Terminal、终端、Shell、PowerShell、open_terminal、
+run_terminal_script、get_terminal_text、list_terminals、
+send_terminal_keyboard_key、close_terminal、terminal_id
+
+## 使用终端工具执行 Shell 命令的步骤
+
+- 步骤1：复用已打开的 Agent 终端；仅在用户要求关闭或重建时调用 close_terminal。
+- 步骤2：没有终端时调用 open_terminal 打开 PowerShell 7 终端。
+- 步骤3：调用 run_terminal_script 向终端输入并执行命令。
+- 步骤4：调用 get_terminal_text 获取终端执行结果。
+- 步骤5：根据终端执行结果判断任务是否成功；如果出现错误，根据错误信息修改方案后继续执行。
+
+## 执行规范
+
+- 对有依赖关系的短时命令，先通过 get_terminal_text 确认当前命令执行完成，再发送下一条命令。
+- 对服务器、监听器等长期运行命令，不要求等待进程退出；确认其已成功启动后即可继续后续任务。
+- 如果同一种终端操作连续失败两次，不要继续原样重试；根据错误原因调整命令、参数或执行方案。
+- 如果命令出现交互式提示，优先寻找非交互参数或配置方式；只有确实需要交互时才使用 send_terminal_keyboard_key。
+- 需要按键或中断命令时调用 send_terminal_keyboard_key，例如 ["ctrl+c"]。
+- 使用 PowerShell 语法。例如查看所有文件使用 Get-ChildItem -Force，不要使用 ls -al。
+
+## Terminal ID 管理
+
+- open_terminal 每次新建窗口都会返回独立 terminal_id，必须记录它。
+- 执行命令、读取输出、发送按键和关闭终端时，应传入对应的 terminal_id。
+- 使用 list_terminals 查看本次会话的终端列表。
+- open_terminal(terminal_id=已有ID) 可用于切换到已有终端。
+- 省略 terminal_id 时使用当前选中的终端。
+- close_terminal 只关闭指定或当前终端；关闭后仍可通过原 terminal_id 读取历史日志。
